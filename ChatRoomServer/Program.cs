@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ChatRoomServer.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,5 +1,7 @@
 ﻿using ChatRoomServer.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatRoomServer.Controllers
@@ -15,9 +17,9 @@ namespace ChatRoomServer.Controllers
             _context = context;
             
             //DEBUG
-            User user = new User() { Id = 0, Username = "test", PasswordHash = "test".GetHashCode() };
+            /*User user = new User() { Id = 0, Username = "test", PasswordHash = "test".GetHashCode() };
             _context.Users.Add(user);
-            _context.SaveChanges();
+            _context.SaveChanges();*/
         }
 
         public IActionResult Index()
@@ -43,6 +45,17 @@ namespace ChatRoomServer.Controllers
                 return Ok("Successfully logged in!");
             }
             return StatusCode(406, "User not found");
+        }
+
+        public IActionResult Register(string username, string password)
+        {
+            int hash = password.GetHashCode();
+            User user = new User() { Username = username, PasswordHash = hash, Id = (_context.Users.LastOrDefault()?.Id ?? -1) + 1 };
+            if (_context.Users.Where(n => n.Username == username).Count() > 0)
+                return StatusCode(406, "User already in system");
+            _context.Users.Add(user);
+            _context.SaveChanges();
+            return Ok("Registered account!");
         }
 
         public IActionResult TestAction(int num1, int num2)
