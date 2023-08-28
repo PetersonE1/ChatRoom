@@ -54,7 +54,7 @@ namespace ChatRoomServer.Controllers
                 Tokens token = _jwtManager.GenerateToken(username);
                 return Ok(token);
             }
-            return StatusCode(401, "Username and/or password is incorrect");
+            return StatusCode(406, "Username and/or password is incorrect");
         }
 
         [AllowAnonymous]
