@@ -3,10 +3,14 @@ using ChatRoomServer.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication("Bearer").AddJwtBearer();
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<UserContext>(opt => opt.UseInMemoryDatabase("UserList"));
@@ -31,6 +35,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.UseAuthorization();
+app.MapGet("/secret", (ClaimsPrincipal user) => $"Hello {user.Identity?.Name}.").RequireAuthorization();
 
 app.MapControllers();
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace ChatRoomServer.Controllers
 {
@@ -56,6 +57,11 @@ namespace ChatRoomServer.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
             return Ok("Registered account!");
+        }
+
+        private string GenerateAuthenticationToken()
+        {
+            return string.Empty;
         }
 
         public IActionResult TestAction(int num1, int num2)
