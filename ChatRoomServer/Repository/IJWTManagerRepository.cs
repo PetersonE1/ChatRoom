@@ -4,6 +4,6 @@ namespace ChatRoomServer.Repository
 {
     public interface IJWTManagerRepository
     {
-        Tokens GenerateToken(User user);
+        Tokens GenerateToken(string username);
     }
 }

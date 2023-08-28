@@ -1,5 +1,7 @@
 ﻿using ChatRoomServer.Models;
+using ChatRoomServer.Repository;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -7,15 +9,18 @@ using System.Text;
 
 namespace ChatRoomServer.Controllers
 {
+    [Authorize]
     public class ChatController : Controller
     {
         private readonly ILogger<ChatController> _logger;
         private readonly UserContext _context;
+        private readonly IJWTManagerRepository _jwtManager;
 
-        public ChatController(ILogger<ChatController> logger, UserContext context)
+        public ChatController(ILogger<ChatController> logger, UserContext context, IJWTManagerRepository jwtManager)
         {
             _logger = logger;
             _context = context;
+            _jwtManager = jwtManager;
             
             //DEBUG
             /*User user = new User() { Id = 0, Username = "test", PasswordHash = "test".GetHashCode() };
@@ -38,16 +43,21 @@ namespace ChatRoomServer.Controllers
             }
         }
 
+        [AllowAnonymous]
         public IActionResult Authenticate(string username, string password)
         {
+            if (username == null || password == null)
+                return StatusCode(406, "Invalid input");
             int hash = password.GetHashCode();
             if (_context.Users.Where(n => n.Username == username && n.PasswordHash == hash).Count() > 0)
             {
-                return Ok("Successfully logged in!");
+                Tokens token = _jwtManager.GenerateToken(username);
+                return Ok(token);
             }
-            return StatusCode(406, "User not found");
+            return StatusCode(401, "Username and/or password is incorrect");
         }
 
+        [AllowAnonymous]
         public IActionResult Register(string username, string password)
         {
             int hash = password.GetHashCode();
@@ -57,11 +67,6 @@ namespace ChatRoomServer.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
             return Ok("Registered account!");
-        }
-
-        private string GenerateAuthenticationToken()
-        {
-            return string.Empty;
         }
 
         public IActionResult TestAction(int num1, int num2)
