@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Text;
 
 namespace ChatRoomServer.Controllers
@@ -13,10 +14,12 @@ namespace ChatRoomServer.Controllers
     public class ChatController : Controller
     {
         private readonly ILogger<ChatController> _logger;
+        private readonly IHttpContextAccessor _context;
 
-        public ChatController(ILogger<ChatController> logger)
+        public ChatController(ILogger<ChatController> logger, IHttpContextAccessor context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -38,7 +41,7 @@ namespace ChatRoomServer.Controllers
         {
             try
             {
-                string s = $"Test 2 Successful: {num1 + num2}";
+                string s = $"Test 2 Successful for {_context.HttpContext?.User.Identity?.Name}: {num1 + num2}";
                 _logger.LogInformation("Get success 2");
                 return Ok(s);
             }
