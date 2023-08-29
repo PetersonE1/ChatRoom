@@ -4,9 +4,13 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace ChatRoomServer.Controllers
 {
@@ -37,6 +41,22 @@ namespace ChatRoomServer.Controllers
             }
         }
 
+        // DEBUG
+        public IActionResult SendMessage([FromBody]string message)
+        {
+            _logger.LogInformation(message);
+            if (message == null)
+                return StatusCode(406, "Null Input");
+            return Ok();
+        }
+
+        // DEBUG
+        public IActionResult GetMessages()
+        {
+            return Ok();
+        }
+
+        // DEBUG
         public IActionResult TestAction(int num1, int num2)
         {
             try
