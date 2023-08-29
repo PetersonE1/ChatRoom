@@ -32,14 +32,23 @@ namespace ChatRoomServer.Controllers
         }
 
         [AllowAnonymous]
-        public IActionResult Authenticate(string username, string password)
+        public IActionResult Authenticate([FromHeader(Name = "Credentials")] string credentials)
         {
-            if (username == null || password == null)
-                return StatusCode(406, "Invalid input");
-            int hash = password.GetHashCode();
-            if (_context.Users.Where(n => n.Username == username && n.PasswordHash == hash).Count() > 0)
+            if (credentials == null)
+                return StatusCode(406, "Null Input");
+            byte[] base64Encoded = Convert.FromBase64String(credentials);
+            string decoded = Encoding.UTF8.GetString(base64Encoded);
+
+            if (!decoded.Contains(':'))
+                return StatusCode(406, "Invalid Input");
+            string[] credentialsArray = decoded.Split(':');
+
+            if (credentialsArray[0].Length == 0 || credentialsArray[1].Length == 0)
+                return StatusCode(406, "Invalid Input");
+            int hash = credentialsArray[1].GetHashCode();
+            if (_context.Users.Where(n => n.Username == credentialsArray[0] && n.PasswordHash == hash).Count() > 0)
             {
-                Tokens token = _jwtManager.GenerateToken(username);
+                Tokens token = _jwtManager.GenerateToken(credentialsArray[0]);
                 return Ok(token);
             }
             return StatusCode(406, "Username and/or password is incorrect");
@@ -53,31 +62,23 @@ namespace ChatRoomServer.Controllers
             return Ok(Convert.ToBase64String(plainTextBytes));
         }
 
-        // DEBUG
         [AllowAnonymous]
-        public IActionResult Register2([FromHeader(Name = "user")] string user)
+        public IActionResult Register([FromHeader(Name = "Credentials")] string credentials)
         {
-            try
-            {
-                byte[] base64Encoded = Convert.FromBase64String(user);
-                string decoded = Encoding.UTF8.GetString(base64Encoded);
-                string[] users = decoded.Split(':');
-                return Ok($"Username: {users[0]}, Password: {users[1]}");
-            }
-            catch
-            {
-                return StatusCode(500, "Error processing input");
-            }
-        }
+            if (credentials == null)
+                return StatusCode(406, "Null Input");
+            byte[] base64Encoded = Convert.FromBase64String(credentials);
+            string decoded = Encoding.UTF8.GetString(base64Encoded);
 
-        [AllowAnonymous]
-        public IActionResult Register([FromHeader(Name = "username")] string username, [FromHeader(Name = "password")] string password)
-        {
-            if (username == null || password == null)
-                return StatusCode(406, "Invalid input");
-            int hash = password.GetHashCode();
-            User user = new User() { Username = username, PasswordHash = hash, Id = (_context.Users.LastOrDefault()?.Id ?? -1) + 1 };
-            if (_context.Users.Where(n => n.Username == username).Count() > 0)
+            if (!decoded.Contains(':'))
+                return StatusCode(406, "Invalid Input");
+            string[] credentialsArray = decoded.Split(':');
+
+            if (credentialsArray[0].Length == 0 || credentialsArray[1].Length == 0)
+                return StatusCode(406, "Invalid Input");
+            int hash = credentialsArray[1].GetHashCode();
+            User user = new User() { Username = credentialsArray[0], PasswordHash = hash, Id = (_context.Users.LastOrDefault()?.Id ?? -1) + 1 };
+            if (_context.Users.Where(n => n.Username == credentialsArray[0]).Count() > 0)
                 return StatusCode(406, "User already in system");
             _context.Users.Add(user);
             _context.SaveChanges();
