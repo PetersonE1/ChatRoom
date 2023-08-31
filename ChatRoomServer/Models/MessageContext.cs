@@ -6,6 +6,6 @@ namespace ChatRoomServer.Models
     {
         public MessageContext(DbContextOptions<MessageContext> options) : base(options) { }
 
-        public DbSet<Message> Users { get; set; } = null!;
+        public DbSet<Message> Messages { get; set; } = null!;
     }
 }

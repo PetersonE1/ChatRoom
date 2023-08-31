@@ -3,7 +3,7 @@
     public class Message
     {
         public string? Body;
-        public User Sender;
+        public string Sender;
         public DateTime TimeSent;
         public string id;
     }

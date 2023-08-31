@@ -2,6 +2,7 @@
 using ChatRoomServer.Repository;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -19,11 +21,13 @@ namespace ChatRoomServer.Controllers
     {
         private readonly ILogger<ChatController> _logger;
         private readonly IHttpContextAccessor _context;
+        private readonly MessageContext _messageContext;
 
-        public ChatController(ILogger<ChatController> logger, IHttpContextAccessor context)
+        public ChatController(ILogger<ChatController> logger, IHttpContextAccessor context, MessageContext messageContext)
         {
             _logger = logger;
             _context = context;
+            _messageContext = messageContext;
         }
 
         public IActionResult Index()
@@ -47,13 +51,39 @@ namespace ChatRoomServer.Controllers
             _logger.LogInformation(message);
             if (message == null)
                 return StatusCode(406, "Null Input");
+            Message new_message = new Message()
+            {
+                Body = message,
+                Sender = Request.HttpContext.User.Identity?.Name ?? "Anonymous",
+                TimeSent = DateTime.UtcNow,
+                id = GenerateMessageID(32)
+            };
+            _messageContext.Messages.Add(new_message);
             return Ok();
         }
 
         // DEBUG
         public IActionResult GetMessages()
         {
-            return Ok();
+            string s = string.Empty;
+            foreach (Message message in _messageContext.Messages)
+            {
+                s += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}]" + message.Body + "\r\n";
+            }
+            return Ok(s);
+        }
+
+        private string GenerateMessageID(int string_length)
+        {
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                string date = DateTime.UtcNow.ToLongDateString();
+                var bit_count = (string_length * 6);
+                var byte_count = ((bit_count + 7) / 8); // rounded up
+                var bytes = new byte[byte_count];
+                rng.GetBytes(bytes);
+                return date + "-" + Convert.ToBase64String(bytes);
+            }
         }
 
         // DEBUG
