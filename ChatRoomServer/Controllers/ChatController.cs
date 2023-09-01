@@ -56,19 +56,20 @@ namespace ChatRoomServer.Controllers
                 Body = message,
                 Sender = Request.HttpContext.User.Identity?.Name ?? "Anonymous",
                 TimeSent = DateTime.UtcNow,
-                id = GenerateMessageID(32)
+                Id = GenerateMessageID(32)
             };
             _messageContext.Messages.Add(new_message);
+            _messageContext.SaveChanges();
             return Ok();
         }
 
         // DEBUG
-        public IActionResult GetMessages()
+        public IActionResult GetMessages([FromHeader]bool displayID)
         {
             string s = string.Empty;
             foreach (Message message in _messageContext.Messages)
             {
-                s += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}]" + message.Body + "\r\n";
+                s += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}{(displayID ? $" ({message.Id})" : string.Empty)}] " + message.Body + "\r\n";
             }
             return Ok(s);
         }
@@ -77,7 +78,7 @@ namespace ChatRoomServer.Controllers
         {
             using (var rng = RandomNumberGenerator.Create())
             {
-                string date = DateTime.UtcNow.ToLongDateString();
+                string date = DateTime.UtcNow.ToShortDateString();
                 var bit_count = (string_length * 6);
                 var byte_count = ((bit_count + 7) / 8); // rounded up
                 var bytes = new byte[byte_count];

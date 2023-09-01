@@ -19,6 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthorization();
 if (builder.Environment.IsDevelopment() && runDemo)
 {
+    Console.WriteLine("Using development authentication");
     builder.Services.AddAuthentication("Bearer").AddJwtBearer();
 }
 else
@@ -44,6 +45,7 @@ builder.Services.AddSingleton<IJWTManagerRepository, JWTManagerRepository>();
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<UserContext>(opt => opt.UseInMemoryDatabase("UserList"));
+builder.Services.AddDbContext<MessageContext>(opt => opt.UseInMemoryDatabase("MessageList"));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -2,9 +2,9 @@
 {
     public class Message
     {
-        public string? Body;
-        public string Sender;
-        public DateTime TimeSent;
-        public string id;
+        public string Id { get; set; }
+        public string? Body { get; set; }
+        public string Sender { get; set; }
+        public DateTime TimeSent { get; set; }
     }
 }
