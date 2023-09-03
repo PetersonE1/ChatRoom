@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ChatRoomServer.Models
 {
-    public class EchoWebSocketManager : IWebsocketManager
+    public class EchoWebSocketManager : IWebSocketManager
     {
         public static async Task ProcessRequest(WebSocket webSocket, string user)
         {

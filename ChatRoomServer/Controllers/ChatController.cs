@@ -74,7 +74,21 @@ namespace ChatRoomServer.Controllers
             return Ok(s);
         }
 
-        private string GenerateMessageID(int string_length)
+        [AllowAnonymous]
+        public async Task EstablishConnection()
+        {
+            if (HttpContext.WebSockets.IsWebSocketRequest)
+            {
+                using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                await ChatWebSocketManager.ProcessRequest(webSocket, HttpContext, _messageContext);
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
+        }
+
+        internal static string GenerateMessageID(int string_length)
         {
             using (var rng = RandomNumberGenerator.Create())
             {
