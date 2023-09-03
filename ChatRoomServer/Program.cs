@@ -77,11 +77,12 @@ app.Use(async (context, next) =>
 {
     if (context.Request.Path == "/ws")
     {
+        Console.WriteLine(context.Connection.RemoteIpAddress);
         if (context.WebSockets.IsWebSocketRequest)
         {
-            string s = context.User.Identity?.Name ?? "Anonymous";
+            string s = (context.User.Identity?.Name ?? "Anonymous") + $" ({context.Connection.RemoteIpAddress})";
             using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-            await EchoWebSocketManager.Echo(webSocket, s);
+            await EchoWebSocketManager.ProcessRequest(webSocket, s);
         }
         else
         {

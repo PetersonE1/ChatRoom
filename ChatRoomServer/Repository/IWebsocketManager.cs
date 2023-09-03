@@ -2,8 +2,8 @@
 
 namespace ChatRoomServer.Repository
 {
-    public interface IWebsocketManager
+    public interface IWebSocketManager
     {
-        abstract static Task Echo(WebSocket webSocket, string user);
+        abstract static Task ProcessRequest(WebSocket webSocket, string user);
     }
 }

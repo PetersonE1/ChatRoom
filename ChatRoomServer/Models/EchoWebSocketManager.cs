@@ -1,11 +1,12 @@
 ﻿using ChatRoomServer.Repository;
 using System.Net.WebSockets;
+using System.Text;
 
 namespace ChatRoomServer.Models
 {
     public class EchoWebSocketManager : IWebsocketManager
     {
-        public static async Task Echo(WebSocket webSocket, string user)
+        public static async Task ProcessRequest(WebSocket webSocket, string user)
         {
             var buffer = new byte[1024 * 4];
             var receiveResult = await webSocket.ReceiveAsync(
@@ -18,7 +19,7 @@ namespace ChatRoomServer.Models
                     receiveResult.MessageType,
                     receiveResult.EndOfMessage,
                     CancellationToken.None);
-                Console.WriteLine($"[{user}] " + buffer.ToString());
+                Console.WriteLine($"[{user}] " + Encoding.UTF8.GetString(buffer));
 
                 receiveResult = await webSocket.ReceiveAsync(
                     new ArraySegment<byte>(buffer), CancellationToken.None);
