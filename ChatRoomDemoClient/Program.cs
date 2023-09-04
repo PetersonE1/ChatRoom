@@ -37,6 +37,7 @@ Console.WriteLine(AuthenticationHandler._token);
 
 using SocketsHttpHandler handler = new();
 using ClientWebSocket ws = new();
+ws.Options.SetRequestHeader("Authorization", $"Bearer {AuthenticationHandler._token}");
 await ws.ConnectAsync(new Uri("wss://localhost:7185/chat/EstablishConnection"), new HttpMessageInvoker(handler), default);
 
 string[] toSend = { "first", "second", "third" };

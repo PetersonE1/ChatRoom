@@ -74,7 +74,6 @@ namespace ChatRoomServer.Controllers
             return Ok(s);
         }
 
-        [AllowAnonymous]
         public async Task EstablishConnection()
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
