@@ -1,6 +1,7 @@
 ﻿using ChatRoomDemoClient;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 
 HttpClient _client = new()
 {
@@ -11,7 +12,7 @@ char loginChoice;
 Console.WriteLine("Select an option\n1. Login\n2. Register an account");
 do
 {
-    loginChoice = (char)Console.Read();
+    loginChoice = Console.ReadKey(true).KeyChar;
 }
 while (loginChoice != '1' && loginChoice != '2');
 
@@ -23,12 +24,12 @@ while (username == null || password == null)
 
 }
 
-if (loginChoice == 2)
+string userEncoding = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+
+if (loginChoice == '2')
 {
-    using HttpResponseMessage response = await _client.GetAsync("user");
-
-    response.EnsureSuccessStatusCode().WriteRequestToConsole();
-
-    var responseData = await response.Content.ReadAsStringAsync();
-    Console.WriteLine($"{responseData}\n");
+    await AuthenticationHandler.Register(userEncoding, _client);
 }
+await AuthenticationHandler.Authenticate(userEncoding, _client);
+
+Console.WriteLine(AuthenticationHandler._token);
