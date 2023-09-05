@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatRoomClient"
         mc:Ignorable="d"
-        Title="Chat Client" Height="450" Width="800">
+        Title="Chat Client" Height="450" Width="800" ResizeMode="NoResize">
     <Grid x:Name="MainGrid">
         <Grid x:Name="LoginScreen">
             <TextBox x:Name="I_Username" HorizontalAlignment="Center" Margin="0,178,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
@@ -16,8 +16,8 @@
             <Button x:Name="B_Register" Content="Register" HorizontalAlignment="Left" Margin="409,250,0,0" VerticalAlignment="Top" MinWidth="50" Click="B_Register_Click"/>
         </Grid>
         <Grid x:Name="ChatScreen" IsEnabled="False">
-            <Button x:Name="B_RefreshLogin" Content="Refresh Login" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" MinWidth="100"/>
-            <Button x:Name="B_Disconnect" Content="Disconnect" HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top" MinWidth="100"/>
+            <Button x:Name="B_RefreshLogin" Content="Refresh Login" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" MinWidth="100" Click="B_RefreshLogin_Click"/>
+            <Button x:Name="B_Disconnect" Content="Disconnect" HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top" MinWidth="100" Click="B_Disconnect_Click"/>
             <Label x:Name="L_Status" Content="Connected" HorizontalAlignment="Left" Margin="25,10,0,0" VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="5,5,5,5"/>
             <Ellipse x:Name="G_StatusIcon" Height="10" Stroke="Black" Width="10" Margin="15,18,775,406" Fill="Lime" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <RichTextBox x:Name="T_ChatFeed" Height="350" Margin="10,10,10,10" Width="600" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#FFEBEBEB" BorderBrush="#FF222531" AcceptsReturn="False" AutoWordSelection="False" IsReadOnly="True">
