@@ -60,17 +60,18 @@ await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default
 
 Console.WriteLine(res);*/
 
-Console.WriteLine("Choose an option:\n1. Send message\n2. Send server request\n3. Close connection");
 WebSocketMessageType? messageType = null;
 do
 {
+    Console.WriteLine("Choose an option:\n1. Send message\n2. Send server request\n3. Close connection");
     messageType = null;
+    string prefix = string.Empty;
     do
     {
         switch (Console.ReadKey(true).KeyChar)
         {
-            case '1': messageType = WebSocketMessageType.Text; break;
-            case '2': messageType = WebSocketMessageType.Binary; break;
+            case '1': messageType = WebSocketMessageType.Text; prefix = "message"; break;
+            case '2': messageType = WebSocketMessageType.Binary; prefix = "command"; break;
             case '3': messageType = WebSocketMessageType.Close; break;
             default: break;
         }
@@ -80,6 +81,7 @@ do
     if (messageType == WebSocketMessageType.Close)
         break;
 
+    Console.Write($"{prefix}> ");
     string message = Console.ReadLine() ?? string.Empty;
     string s = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
 
@@ -97,3 +99,4 @@ do
 while (messageType != WebSocketMessageType.Close);
 
 await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
+Console.WriteLine("\nConnection terminated");
