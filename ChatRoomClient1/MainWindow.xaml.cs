@@ -30,6 +30,7 @@ namespace ChatRoomClient
             {
                 BaseAddress = new Uri("https://localhost:7185")
             };
+            ChatScreen.IsEnabled = false;
             InitializeComponent();
         }
 
@@ -38,6 +39,8 @@ namespace ChatRoomClient
             string userpass = I_Username.Text + ":" + I_Password.Password;
             string userHash = userpass.ToBase64();
             await AuthenticationHandler.Authenticate(userHash, _client);
+            LoginScreen.IsEnabled = false;
+            ChatScreen.IsEnabled = true;
         }
 
         private async void B_Register_Click(object sender, RoutedEventArgs e)
@@ -46,6 +49,8 @@ namespace ChatRoomClient
             string userHash = userpass.ToBase64();
             await AuthenticationHandler.Register(userHash, _client);
             await AuthenticationHandler.Authenticate(userHash, _client);
+            LoginScreen.IsEnabled = false;
+            ChatScreen.IsEnabled = true;
         }
     }
 }
