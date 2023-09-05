@@ -72,10 +72,13 @@ namespace ChatRoomClient
             if (_webSocket != null)
             {
                 await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
+                T_CommandLog.AppendText("Disconnected" + "\r\n");
+                L_Status.Content = "Disconnected";
+                G_StatusIcon.Fill = Brushes.Red;
             }
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private async void B_Command_Click(object sender, RoutedEventArgs e)
         {
             if (_webSocket == null)
                 return;
@@ -91,6 +94,7 @@ namespace ChatRoomClient
             var bytes = new byte[1024];
             var result = await _webSocket.ReceiveAsync(bytes, default);
             string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
+            T_CommandLog.AppendText(res + "\r\n");
         }
     }
 }

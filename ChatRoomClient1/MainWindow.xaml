@@ -18,29 +18,29 @@
         <Grid x:Name="ChatScreen" IsEnabled="False">
             <Button x:Name="B_RefreshLogin" Content="Refresh Login" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" MinWidth="100" Click="B_RefreshLogin_Click"/>
             <Button x:Name="B_Disconnect" Content="Disconnect" HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top" MinWidth="100" Click="B_Disconnect_Click"/>
-            <Label x:Name="L_Status" Content="Connected" HorizontalAlignment="Left" Margin="25,10,0,0" VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="5,5,5,5"/>
-            <Ellipse x:Name="G_StatusIcon" Height="10" Stroke="Black" Width="10" Margin="15,18,775,406" Fill="Lime" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Label x:Name="L_Status" Content="Disconnected" HorizontalAlignment="Left" Margin="25,10,0,0" VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="5,5,5,5"/>
+            <Ellipse x:Name="G_StatusIcon" Height="10" Stroke="Black" Width="10" Margin="15,18,775,406" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             <RichTextBox x:Name="T_ChatFeed" Height="350" Margin="10,10,10,10" Width="600" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#FFEBEBEB" BorderBrush="#FF222531" AcceptsReturn="False" AutoWordSelection="False" IsReadOnly="True">
                 <FlowDocument>
                     <Paragraph>
-                        <Run Text="RichTextBox"/>
+                        <Run Text=""/>
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
             <RichTextBox x:Name="I_MessageBox" Margin="10,365,10,0" VerticalAlignment="Top" Height="59" Width="NaN" Background="#FFF9F9F9" BorderBrush="Black">
                 <FlowDocument>
                     <Paragraph>
-                        <Run Text="RichTextBox"/>
+                        <Run Text=""/>
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
             <Button x:Name="B_Send" Content="Send" HorizontalAlignment="Left" Margin="10,0,0,74" VerticalAlignment="Bottom" Width="175"/>
             <TextBox x:Name="I_Command" HorizontalAlignment="Left" Margin="10,129,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="175"/>
-            <Button x:Name="B_Command" Content="Send Command" HorizontalAlignment="Left" Margin="10,152,0,0" VerticalAlignment="Top" Width="175" Click="Button_Click"/>
+            <Button x:Name="B_Command" Content="Send Command" HorizontalAlignment="Left" Margin="10,152,0,0" VerticalAlignment="Top" Width="175" Click="B_Command_Click"/>
             <RichTextBox x:Name="T_CommandLog" Height="128" Margin="0,177,615,0" Width="175" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#FFEBEBEB" BorderBrush="#FF222531" AcceptsReturn="False" AutoWordSelection="False" IsReadOnly="True">
                 <FlowDocument>
                     <Paragraph>
-                        <Run Text="RichTextBox"/>
+                        <Run Text=""/>
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
