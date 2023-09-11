@@ -46,8 +46,8 @@ do
     Task messageTask = ConnectionHandler.GetMessageAsync(buffer);
     Task webSocketTask = ConnectionHandler.FeedSocketBufferAsync(ws, buffer);
 
-    messageTask.Start();
-    webSocketTask.Start();
+    await messageTask;
+    await webSocketTask;
     await Task.Delay(200);
 }
 while (ws.State != WebSocketState.CloseSent);
