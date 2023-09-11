@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,6 +56,14 @@ namespace ChatRoomDemoClient
 
             var responseData = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"{responseData}\n");
+        }
+
+        public static async Task ConnectToWebSocket()
+        {
+            using SocketsHttpHandler handler = new();
+            using ClientWebSocket ws = new();
+            ws.Options.SetRequestHeader("Authorization", $"Bearer {AuthenticationHandler._token}");
+            await ws.ConnectAsync(new Uri("wss://localhost:7185/chat/EstablishConnection"), new HttpMessageInvoker(handler), default);
         }
 
         private class Tokens
