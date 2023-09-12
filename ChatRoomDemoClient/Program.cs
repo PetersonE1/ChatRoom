@@ -41,16 +41,17 @@ ws.Options.SetRequestHeader("Authorization", $"Bearer {AuthenticationHandler._to
 await ws.ConnectAsync(new Uri("wss://localhost:7185/chat/EstablishConnection"), new HttpMessageInvoker(handler), default);
 
 List<WebSocketMessage> buffer = new List<WebSocketMessage>();
-do
+Task messageTask = Task.CompletedTask;
+while (ws.State != WebSocketState.CloseSent && ws.State != WebSocketState.CloseReceived && ws.State != WebSocketState.Closed && ws.State != WebSocketState.Aborted)
 {
-    Task messageTask = ConnectionHandler.GetMessageAsync(buffer);
-    Task webSocketTask = ConnectionHandler.FeedSocketBufferAsync(ws, buffer);
+    ConnectionHandler.FeedSocketBufferAsync(ws, buffer);
 
-    await messageTask;
-    await webSocketTask;
+    if (messageTask.IsCompleted)
+    {
+        messageTask = ConnectionHandler.GetMessageAsync(buffer);
+    }
     await Task.Delay(200);
 }
-while (ws.State != WebSocketState.CloseSent);
 
 await ConnectionHandler.WaitUntilSocketClosed(ws);
 Console.WriteLine("\nConnection terminated");

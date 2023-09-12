@@ -9,8 +9,9 @@ namespace ChatRoomDemoClient
 {
     internal static class ConnectionHandler
     {
-        public static Task<string> GetInputAsyncTask()
+        public static Task<string> GetInputAsyncTask(string prefix)
         {
+            Console.Write($"{prefix}> ");
             return Task.Run(() => Console.ReadLine() ?? string.Empty);
         }
 
@@ -25,7 +26,6 @@ namespace ChatRoomDemoClient
             {
                 WebSocketMessageType? messageType = null;
                 Console.WriteLine("Choose an option:\n1. Send message\n2. Send server request\n3. Close connection");
-                messageType = null;
                 string prefix = string.Empty;
                 do
                 {
@@ -39,18 +39,20 @@ namespace ChatRoomDemoClient
                 }
                 while (messageType == null);
 
-                string messageString = await GetInputAsyncTask();
+                string messageString = await GetInputAsyncTask(prefix);
 
                 WebSocketMessage message = new WebSocketMessage(messageString, (WebSocketMessageType)messageType);
                 buffer.Add(message);
+                return Task.CompletedTask;
             });
         }
 
-        public static async Task FeedSocketBufferAsync(WebSocket ws, List<WebSocketMessage> buffer)
+        public static void FeedSocketBufferAsync(WebSocket ws, List<WebSocketMessage> buffer)
         {
             List<Task> tasks = new List<Task>();
-            foreach (WebSocketMessage message in buffer)
+            while (buffer.Count > 0)
             {
+                WebSocketMessage message = buffer.First();
                 if (message.Type == WebSocketMessageType.Close)
                 {
                     tasks.Add(ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default));
@@ -58,15 +60,13 @@ namespace ChatRoomDemoClient
                     break;
                 }
                 tasks.Add(RunSocketLoopAsync(ws, message));
+                buffer.RemoveAt(0);
             }
-            buffer.Clear();
-            foreach (Task<string> task in tasks)
-            {
-                await task;
-            }
+
+            Task.WaitAll(tasks.ToArray());
         }
 
-        public static Task<string> RunSocketLoopAsync(WebSocket ws, WebSocketMessage message)
+        public static Task RunSocketLoopAsync(WebSocket ws, WebSocketMessage message)
         {
             return Task.Run(async () =>
             {
@@ -78,7 +78,6 @@ namespace ChatRoomDemoClient
 
                 Console.Clear();
                 Console.WriteLine(res);
-                return res;
             });
         }
 

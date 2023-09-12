@@ -21,9 +21,9 @@ namespace ChatRoomServer.Models
                 {
                     messages = ProcessInput(Encoding.UTF8.GetString(buffer));
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"Bad input from {context.Connection.RemoteIpAddress} at {DateTime.UtcNow}");
+                    Console.WriteLine($"Bad input from {context.Connection.RemoteIpAddress} at {DateTime.UtcNow}:\n{ex.StackTrace}");
                 }
                 switch (receiveResult.MessageType)
                 {
