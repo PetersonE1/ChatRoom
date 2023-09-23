@@ -28,7 +28,7 @@ namespace ChatRoomClient
         const int WEBSOCKET_DELAY = 100;
         Timer? _webSocketTimer;
         HttpClient _client;
-        WebSocket? _webSocket;
+        WebSocket? _webSocket => AuthenticationHandler._webSocket;
         List<string> _messagesToSend = new List<string>();
 
         public MainWindow()
@@ -46,12 +46,14 @@ namespace ChatRoomClient
         {
             string userpass = I_Username.Text + ":" + I_Password.Password;
             string userHash = userpass.ToBase64();
-            await AuthenticationHandler.Authenticate(userHash, _client);
+            bool success = await AuthenticationHandler.Authenticate(userHash, _client);
+            if (!success) return;
             LoginScreen.IsEnabled = false;
             LoginScreen.Visibility = Visibility.Collapsed;
             ChatScreen.IsEnabled = true;
             ChatScreen.Visibility = Visibility.Visible;
 
+            AuthenticationHandler.ConnectToWebSocket();
             _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 10000, 100);
         }
 
@@ -66,7 +68,8 @@ namespace ChatRoomClient
             ChatScreen.IsEnabled = true;
             ChatScreen.Visibility = Visibility.Visible;
 
-            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 10000, 100);
+            AuthenticationHandler.ConnectToWebSocket();
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, 100);
         }
 
         private async void B_RefreshLogin_Click(object sender, RoutedEventArgs e)
@@ -78,7 +81,7 @@ namespace ChatRoomClient
 
         private async void B_Disconnect_Click(object sender, RoutedEventArgs e)
         {
-            if (_webSocket != null)
+            if (_webSocket != null && _webSocket.State == WebSocketState.Open)
             {
                 await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
                 T_CommandLog.AppendText("Disconnected" + "\r\n");
@@ -125,28 +128,32 @@ namespace ChatRoomClient
 
         private async Task WebSocketLoop(object? state)
         {
-            if (_webSocket == null || _webSocket.State != WebSocketState.Open) return;
-
-            CancellationToken token = CancellationToken.None;
-            if (_messagesToSend.Count == 0)
-                token = new CancellationToken(true);
-
-            string s = string.Join(':', _messagesToSend);
-            _messagesToSend.Clear();
-
-            await _webSocket.SendAsync(
-                            new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
-                            WebSocketMessageType.Text,
-                            true,
-                            token);
-
-            var bytes = new byte[1024];
-            var result = await _webSocket.ReceiveAsync(bytes, default);
-            string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
-            T_ChatFeed.Document.Blocks.Clear();
-            T_ChatFeed.Document.Blocks.Add(
-                new Paragraph(new Run(res))
-                );
+            await this.Dispatcher.InvokeAsync(async () =>
+            {
+                T_CommandLog.AppendText($"Timer fired - WebSocket state: [{_webSocket != null}, {_webSocket?.State}]\r\n");
+                if (_webSocket == null || _webSocket.State != WebSocketState.Open) return;
+                T_CommandLog.AppendText("Processing websocket messages");
+                CancellationToken token = CancellationToken.None;
+                if (_messagesToSend.Count == 0)
+                    token = new CancellationToken(true);
+                
+                string s = string.Join(':', _messagesToSend);
+                _messagesToSend.Clear();
+                
+                await _webSocket.SendAsync(
+                                new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
+                                WebSocketMessageType.Text,
+                                true,
+                                token);
+                
+                var bytes = new byte[1024];
+                var result = await _webSocket.ReceiveAsync(bytes, default);
+                string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
+                T_ChatFeed.Document.Blocks.Clear();
+                T_ChatFeed.Document.Blocks.Add(
+                    new Paragraph(new Run(res))
+                    );
+            });
         }
     }
 }

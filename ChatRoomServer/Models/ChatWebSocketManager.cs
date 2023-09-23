@@ -10,10 +10,10 @@ namespace ChatRoomServer.Models
     {
         public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext)
         {
-            CancellationToken token = CancellationToken.None;
+            CancellationTokenSource token = new CancellationTokenSource();
             var buffer = new byte[1024 * 4];
             var receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), token);
+                new ArraySegment<byte>(buffer), token.Token);
 
             while (!receiveResult.CloseStatus.HasValue)
             {
@@ -22,7 +22,7 @@ namespace ChatRoomServer.Models
                     TextMessage(null, context, messageContext, webSocket);
 
                     receiveResult = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), token);
+                    new ArraySegment<byte>(buffer), token.Token);
 
                     continue;
                 }
@@ -48,7 +48,7 @@ namespace ChatRoomServer.Models
                     break;
 
                 receiveResult = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), token);
+                    new ArraySegment<byte>(buffer), token.Token);
             }
 
             await webSocket.CloseAsync(

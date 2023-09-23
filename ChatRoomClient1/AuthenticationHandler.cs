@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ChatRoomClient;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace ChatRoomDemoClient
     {
         internal static string? _token;
         internal static string? _refreshToken;
+        internal static WebSocket? _webSocket;
 
         public static void GetCredentials(out string? username, out string? password)
         {
@@ -22,7 +24,7 @@ namespace ChatRoomDemoClient
             password = Console.ReadLine();
         }
 
-        public static async Task Authenticate(string userEncoding, HttpClient client)
+        public static async Task<bool> Authenticate(string userEncoding, HttpClient client)
         {
             HttpRequestMessage message = new HttpRequestMessage()
             {
@@ -36,9 +38,17 @@ namespace ChatRoomDemoClient
             response.EnsureSuccessStatusCode().WriteRequestToConsole();
 
             var responseData = await response.Content.ReadAsStringAsync();
-            Tokens token = JsonConvert.DeserializeObject<Tokens>(responseData);
-            _token = token.Token;
             Console.WriteLine($"{responseData}\n");
+            try
+            {
+                Tokens token = JsonConvert.DeserializeObject<Tokens>(responseData);
+                _token = token.Token;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public static async Task Register(string userEncoding, HttpClient client)
@@ -62,8 +72,10 @@ namespace ChatRoomDemoClient
         {
             using SocketsHttpHandler handler = new();
             using ClientWebSocket ws = new();
-            ws.Options.SetRequestHeader("Authorization", $"Bearer {AuthenticationHandler._token}");
+            ws.Options.SetRequestHeader("Authorization", $"Bearer {_token}");
             await ws.ConnectAsync(new Uri("wss://localhost:7185/chat/EstablishConnection"), new HttpMessageInvoker(handler), default);
+            _webSocket = ws;
+            await Task.Delay(-1);
         }
 
         private class Tokens
