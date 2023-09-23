@@ -1,4 +1,5 @@
 ﻿using ChatRoomDemoClient;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,8 +25,11 @@ namespace ChatRoomClient
     /// </summary>
     public partial class MainWindow : Window
     {
+        const int WEBSOCKET_DELAY = 100;
+        Timer? _webSocketTimer;
         HttpClient _client;
         WebSocket? _webSocket;
+        List<string> _messagesToSend = new List<string>();
 
         public MainWindow()
         {
@@ -33,6 +37,7 @@ namespace ChatRoomClient
             {
                 BaseAddress = new Uri("https://localhost:7185")
             };
+
             InitializeComponent();
             ChatScreen.Visibility = Visibility.Collapsed;
         }
@@ -46,6 +51,8 @@ namespace ChatRoomClient
             LoginScreen.Visibility = Visibility.Collapsed;
             ChatScreen.IsEnabled = true;
             ChatScreen.Visibility = Visibility.Visible;
+
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 10000, 100);
         }
 
         private async void B_Register_Click(object sender, RoutedEventArgs e)
@@ -95,6 +102,49 @@ namespace ChatRoomClient
             var result = await _webSocket.ReceiveAsync(bytes, default);
             string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
             T_CommandLog.AppendText(res + "\r\n");
+        }
+
+        private void B_Send_Click(object sender, RoutedEventArgs e)
+        {
+            if (_webSocket == null)
+                return;
+
+            TextRange textRange = new TextRange(
+                I_MessageBox.Document.ContentStart,
+                I_MessageBox.Document.ContentEnd
+                );
+
+            string s = textRange.Text.ToBase64();
+
+            _messagesToSend.Add(s);
+
+            I_MessageBox.Document.Blocks.Clear();
+        }
+
+        private async Task WebSocketLoop(object? state)
+        {
+            if (_webSocket == null || _webSocket.State != WebSocketState.Open) return;
+
+            CancellationToken token = CancellationToken.None;
+            if (_messagesToSend.Count == 0)
+                token = new CancellationToken(true);
+
+            string s = string.Join(':', _messagesToSend);
+            _messagesToSend.Clear();
+
+            await _webSocket.SendAsync(
+                            new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
+                            WebSocketMessageType.Text,
+                            true,
+                            token);
+
+            var bytes = new byte[1024];
+            var result = await _webSocket.ReceiveAsync(bytes, default);
+            string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
+            T_ChatFeed.Document.Blocks.Clear();
+            T_ChatFeed.Document.Blocks.Add(
+                new Paragraph(new Run(res))
+                );
         }
     }
 }

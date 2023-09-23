@@ -34,7 +34,7 @@
                     </Paragraph>
                 </FlowDocument>
             </RichTextBox>
-            <Button x:Name="B_Send" Content="Send" HorizontalAlignment="Left" Margin="10,0,0,74" VerticalAlignment="Bottom" Width="175"/>
+            <Button x:Name="B_Send" Content="Send" HorizontalAlignment="Left" Margin="10,0,0,74" VerticalAlignment="Bottom" Width="175" Click="B_Send_Click"/>
             <TextBox x:Name="I_Command" HorizontalAlignment="Left" Margin="10,129,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="175"/>
             <Button x:Name="B_Command" Content="Send Command" HorizontalAlignment="Left" Margin="10,152,0,0" VerticalAlignment="Top" Width="175" Click="B_Command_Click"/>
             <RichTextBox x:Name="T_CommandLog" Height="128" Margin="0,177,615,0" Width="175" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#FFEBEBEB" BorderBrush="#FF222531" AcceptsReturn="False" AutoWordSelection="False" IsReadOnly="True">
