@@ -32,7 +32,7 @@ namespace ChatRoomDemoClient
 
         public WebSocketMessage(string s, WebSocketMessageType type)
         {
-            Bytes = new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length);
+            Bytes = new ArraySegment<byte>(Encoding.UTF8.GetBytes(Convert.ToBase64String(Encoding.UTF8.GetBytes(s)), 0, s.Length));
             Type = type;
             EndOfMessage = true;
             CancellationToken = CancellationToken.None;

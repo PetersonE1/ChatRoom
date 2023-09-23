@@ -55,11 +55,11 @@ namespace ChatRoomDemoClient
                 WebSocketMessage message = buffer.First();
                 if (message.Type == WebSocketMessageType.Close)
                 {
-                    tasks.Add(ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default));
+                    tasks.Add(Task.Factory.StartNew(() => ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default)));
                     Console.WriteLine("Connection closing...");
                     break;
                 }
-                tasks.Add(RunSocketLoopAsync(ws, message));
+                tasks.Add(Task.Factory.StartNew(() => RunSocketLoopAsync(ws, message)));
                 buffer.RemoveAt(0);
             }
 

@@ -65,6 +65,8 @@ namespace ChatRoomClient
             LoginScreen.Visibility = Visibility.Collapsed;
             ChatScreen.IsEnabled = true;
             ChatScreen.Visibility = Visibility.Visible;
+
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 10000, 100);
         }
 
         private async void B_RefreshLogin_Click(object sender, RoutedEventArgs e)
