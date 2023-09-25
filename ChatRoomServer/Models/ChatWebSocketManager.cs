@@ -10,27 +10,29 @@ namespace ChatRoomServer.Models
     {
         public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext)
         {
-            CancellationTokenSource token = new CancellationTokenSource();
             var buffer = new byte[1024 * 4];
             var receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), token.Token);
+                new ArraySegment<byte>(buffer), default);
 
             while (!receiveResult.CloseStatus.HasValue)
             {
-                if (token.IsCancellationRequested)
+                string input = Encoding.UTF8.GetString(buffer);
+                if (input.Trim('\0') == "NULL")
                 {
                     TextMessage(null, context, messageContext, webSocket);
 
+                    buffer = new byte[1024 * 4];
                     receiveResult = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), token.Token);
+                    new ArraySegment<byte>(buffer), default);
 
                     continue;
                 }
-
+                Console.WriteLine(input);
+                Console.WriteLine("Continuing");
                 string[]? messages = null;
                 try
                 {
-                    messages = ProcessInput(Encoding.UTF8.GetString(buffer));
+                    messages = ProcessInput(input);
                 }
                 catch (Exception ex)
                 {
@@ -46,11 +48,14 @@ namespace ChatRoomServer.Models
 
                 if (receiveResult.MessageType == WebSocketMessageType.Close)
                     break;
-
+                Console.WriteLine("Message not closer");
+                buffer = new byte[1024 * 4];
                 receiveResult = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), token.Token);
+                    new ArraySegment<byte>(buffer), default);
+                Console.WriteLine($"Recieve result close status: {receiveResult.CloseStatus.GetValueOrDefault(WebSocketCloseStatus.Empty)}");
             }
 
+            Console.WriteLine("Closing");
             await webSocket.CloseAsync(
                 receiveResult.CloseStatus.Value,
                 receiveResult.CloseStatusDescription,

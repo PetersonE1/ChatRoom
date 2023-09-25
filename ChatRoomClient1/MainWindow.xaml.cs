@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -54,7 +55,7 @@ namespace ChatRoomClient
             ChatScreen.Visibility = Visibility.Visible;
 
             AuthenticationHandler.ConnectToWebSocket();
-            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 10000, 100);
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, 100);
         }
 
         private async void B_Register_Click(object sender, RoutedEventArgs e)
@@ -84,7 +85,7 @@ namespace ChatRoomClient
             if (_webSocket != null && _webSocket.State == WebSocketState.Open)
             {
                 await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
-                T_CommandLog.AppendText("Disconnected" + "\r\n");
+                LogCommand("Disconnected");
                 L_Status.Content = "Disconnected";
                 G_StatusIcon.Fill = Brushes.Red;
             }
@@ -106,20 +107,17 @@ namespace ChatRoomClient
             var bytes = new byte[1024];
             var result = await _webSocket.ReceiveAsync(bytes, default);
             string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
-            T_CommandLog.AppendText(res + "\r\n");
+            LogCommand(res);
         }
 
         private void B_Send_Click(object sender, RoutedEventArgs e)
         {
-            if (_webSocket == null)
-                return;
-
             TextRange textRange = new TextRange(
                 I_MessageBox.Document.ContentStart,
                 I_MessageBox.Document.ContentEnd
                 );
 
-            string s = textRange.Text.ToBase64();
+            string s = textRange.Text.Trim().ToBase64();
 
             _messagesToSend.Add(s);
 
@@ -128,23 +126,22 @@ namespace ChatRoomClient
 
         private async Task WebSocketLoop(object? state)
         {
-            await this.Dispatcher.InvokeAsync(async () =>
+            await Dispatcher.InvokeAsync(async () =>
             {
-                T_CommandLog.AppendText($"Timer fired - WebSocket state: [{_webSocket != null}, {_webSocket?.State}]\r\n");
                 if (_webSocket == null || _webSocket.State != WebSocketState.Open) return;
-                T_CommandLog.AppendText("Processing websocket messages");
-                CancellationToken token = CancellationToken.None;
-                if (_messagesToSend.Count == 0)
-                    token = new CancellationToken(true);
-                
+
                 string s = string.Join(':', _messagesToSend);
+
+                if (_messagesToSend.Count == 0)
+                    s = "NULL";
+
                 _messagesToSend.Clear();
-                
+                Debug.WriteLine(s);
                 await _webSocket.SendAsync(
                                 new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
                                 WebSocketMessageType.Text,
                                 true,
-                                token);
+                                CancellationToken.None);
                 
                 var bytes = new byte[1024];
                 var result = await _webSocket.ReceiveAsync(bytes, default);
@@ -153,6 +150,15 @@ namespace ChatRoomClient
                 T_ChatFeed.Document.Blocks.Add(
                     new Paragraph(new Run(res))
                     );
+            });
+        }
+
+        private void LogCommand(object message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                T_CommandLog.Document.Blocks.Clear();
+                T_CommandLog.AppendText(message.ToString());
             });
         }
     }
