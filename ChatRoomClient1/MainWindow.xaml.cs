@@ -55,7 +55,7 @@ namespace ChatRoomClient
             ChatScreen.Visibility = Visibility.Visible;
 
             AuthenticationHandler.ConnectToWebSocket();
-            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, 100);
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, WEBSOCKET_DELAY);
         }
 
         private async void B_Register_Click(object sender, RoutedEventArgs e)
@@ -70,7 +70,7 @@ namespace ChatRoomClient
             ChatScreen.Visibility = Visibility.Visible;
 
             AuthenticationHandler.ConnectToWebSocket();
-            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, 100);
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, WEBSOCKET_DELAY);
         }
 
         private async void B_RefreshLogin_Click(object sender, RoutedEventArgs e)
