@@ -78,6 +78,9 @@ namespace ChatRoomClient
             string userpass = I_Username.Text + ":" + I_Password.Password;
             string userHash = userpass.ToBase64();
             await AuthenticationHandler.Authenticate(userHash, _client);
+            if (_webSocket == null || _webSocket.State != WebSocketState.Open)
+                AuthenticationHandler.ConnectToWebSocket();
+            LogCommand("Reconnected");
         }
 
         private async void B_Disconnect_Click(object sender, RoutedEventArgs e)
@@ -86,7 +89,6 @@ namespace ChatRoomClient
             {
                 await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
                 LogCommand("Disconnected");
-                L_Status.Content = "Disconnected";
                 G_StatusIcon.Fill = Brushes.Red;
             }
         }
@@ -128,7 +130,12 @@ namespace ChatRoomClient
         {
             await Dispatcher.InvokeAsync(async () =>
             {
-                if (_webSocket == null || _webSocket.State != WebSocketState.Open) return;
+                if (_webSocket == null || _webSocket.State != WebSocketState.Open)
+                {
+                    L_Status.Content = "Disconnected";
+                    return;
+                }
+                L_Status.Content = "Connected";
 
                 string s = string.Join(':', _messagesToSend);
 
