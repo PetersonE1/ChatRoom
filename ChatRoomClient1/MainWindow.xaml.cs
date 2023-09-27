@@ -55,7 +55,7 @@ namespace ChatRoomClient
             ChatScreen.Visibility = Visibility.Visible;
 
             AuthenticationHandler.ConnectToWebSocket();
-            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, WEBSOCKET_DELAY);
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, WEBSOCKET_DELAY * 3, WEBSOCKET_DELAY);
         }
 
         private async void B_Register_Click(object sender, RoutedEventArgs e)
@@ -70,7 +70,7 @@ namespace ChatRoomClient
             ChatScreen.Visibility = Visibility.Visible;
 
             AuthenticationHandler.ConnectToWebSocket();
-            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, 3000, WEBSOCKET_DELAY);
+            _webSocketTimer = new(async (o) => await WebSocketLoop(o), null, WEBSOCKET_DELAY * 3, WEBSOCKET_DELAY);
         }
 
         private async void B_RefreshLogin_Click(object sender, RoutedEventArgs e)
@@ -89,13 +89,14 @@ namespace ChatRoomClient
             {
                 await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
                 LogCommand("Disconnected");
-                G_StatusIcon.Fill = Brushes.Red;
             }
         }
 
         private async void B_Command_Click(object sender, RoutedEventArgs e)
         {
-            if (_webSocket == null)
+            Debug.WriteLine(this.ActualHeight);
+            Debug.WriteLine(this.ActualWidth);
+            if (_webSocket == null || _webSocket.State != WebSocketState.Open)
                 return;
 
             string s = I_Command.Text.ToBase64();
@@ -133,9 +134,11 @@ namespace ChatRoomClient
                 if (_webSocket == null || _webSocket.State != WebSocketState.Open)
                 {
                     L_Status.Content = "Disconnected";
+                    G_StatusIcon.Fill = Brushes.Red;
                     return;
                 }
                 L_Status.Content = "Connected";
+                G_StatusIcon.Fill = Brushes.Green;
 
                 string s = string.Join(':', _messagesToSend);
 

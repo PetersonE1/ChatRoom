@@ -5,9 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatRoomClient"
         mc:Ignorable="d"
-        Title="Chat Client" Height="450" Width="800" ResizeMode="NoResize">
+        Title="Chat Client" Height="471.2" Width="814.4" ResizeMode="NoResize" ShowInTaskbar="False">
     <Grid x:Name="MainGrid">
-        <Grid x:Name="LoginScreen">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="9*"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid x:Name="LoginScreen" Grid.ColumnSpan="2">
             <TextBox x:Name="I_Username" HorizontalAlignment="Center" Margin="0,178,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
             <PasswordBox x:Name="I_Password" HorizontalAlignment="Center" Margin="0,217,0,0" VerticalAlignment="Top" Width="120"/>
             <Label x:Name="L_Username" Content="Username:" HorizontalAlignment="Left" Margin="339,157,0,0" VerticalAlignment="Top" VerticalContentAlignment="Bottom" Padding="0,5,5,0"/>
@@ -15,7 +19,7 @@
             <Button x:Name="B_Login" Content="Login" HorizontalAlignment="Left" Margin="339,250,0,0" VerticalAlignment="Top" MinWidth="50" Click="B_Login_Click"/>
             <Button x:Name="B_Register" Content="Register" HorizontalAlignment="Left" Margin="409,250,0,0" VerticalAlignment="Top" MinWidth="50" Click="B_Register_Click"/>
         </Grid>
-        <Grid x:Name="ChatScreen" IsEnabled="False">
+        <Grid x:Name="ChatScreen" IsEnabled="False" Grid.ColumnSpan="2">
             <Button x:Name="B_RefreshLogin" Content="Refresh Login" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" MinWidth="100" Click="B_RefreshLogin_Click"/>
             <Button x:Name="B_Disconnect" Content="Disconnect" HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top" MinWidth="100" Click="B_Disconnect_Click"/>
             <Label x:Name="L_Status" Content="Disconnected" HorizontalAlignment="Left" Margin="25,10,0,0" VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="5,5,5,5"/>
