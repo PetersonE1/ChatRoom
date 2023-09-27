@@ -146,10 +146,14 @@ namespace ChatRoomClient
                 var bytes = new byte[1024];
                 var result = await _webSocket.ReceiveAsync(bytes, default);
                 string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
-                T_ChatFeed.Document.Blocks.Clear();
-                T_ChatFeed.Document.Blocks.Add(
-                    new Paragraph(new Run(res))
-                    );
+                if (res != ((Run?)((Paragraph?)T_ChatFeed.Document.Blocks.FirstBlock)?.Inlines.FirstInline)?.Text)
+                {
+                    T_ChatFeed.Document.Blocks.Clear();
+                    T_ChatFeed.Document.Blocks.Add(
+                        new Paragraph(new Run(res))
+                        );
+                    T_ChatFeed.ScrollToEnd();
+                }
             });
         }
 

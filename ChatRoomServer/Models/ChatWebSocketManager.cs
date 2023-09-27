@@ -10,6 +10,7 @@ namespace ChatRoomServer.Models
     {
         public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext)
         {
+            Console.WriteLine($"Opening connection with {context.Connection.RemoteIpAddress} at {DateTime.UtcNow}");
             var buffer = new byte[1024 * 4];
             var receiveResult = await webSocket.ReceiveAsync(
                 new ArraySegment<byte>(buffer), default);
@@ -27,8 +28,7 @@ namespace ChatRoomServer.Models
 
                     continue;
                 }
-                Console.WriteLine(input);
-                Console.WriteLine("Continuing");
+
                 string[]? messages = null;
                 try
                 {
@@ -48,14 +48,13 @@ namespace ChatRoomServer.Models
 
                 if (receiveResult.MessageType == WebSocketMessageType.Close)
                     break;
-                Console.WriteLine("Message not closer");
+
                 buffer = new byte[1024 * 4];
                 receiveResult = await webSocket.ReceiveAsync(
                     new ArraySegment<byte>(buffer), default);
-                Console.WriteLine($"Recieve result close status: {receiveResult.CloseStatus.GetValueOrDefault(WebSocketCloseStatus.Empty)}");
             }
 
-            Console.WriteLine("Closing");
+            Console.WriteLine($"Closing connection with {context.Connection.RemoteIpAddress} at {DateTime.UtcNow} with {receiveResult.CloseStatus ?? WebSocketCloseStatus.Empty}: {receiveResult.CloseStatusDescription ?? "null"}");
             await webSocket.CloseAsync(
                 receiveResult.CloseStatus.Value,
                 receiveResult.CloseStatusDescription,
