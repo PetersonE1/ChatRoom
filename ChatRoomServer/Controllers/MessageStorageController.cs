@@ -19,25 +19,27 @@ namespace ChatRoomServer.Controllers
 
             LoadMessagesFromDatabaseAsync().RunSynchronously();
             SaveTimer = new(async (o) => await SaveMessagesToDatabaseAsync(o), null, SAVE_DELAY, SAVE_DELAY);
+
+            CommandProcessor._messageController = this;
         }
 
         [NonAction]
-        private async Task SaveMessagesToDatabaseAsync(object? state)
+        public async Task SaveMessagesToDatabaseAsync(object? state)
         {
             foreach (var message in _messageContext.Messages)
             {
-                if (_persistentMessageContext.Messages.FirstOrDefault(m => m.Id == message.Id) == null)
+                if (_persistentMessageContext.Messages.Any(m => m.Id == message.Id))
                     _persistentMessageContext.Messages.Add(message);
             }
             await _persistentMessageContext.SaveChangesAsync();
         }
 
         [NonAction]
-        private async Task LoadMessagesFromDatabaseAsync()
+        public async Task LoadMessagesFromDatabaseAsync()
         {
             foreach (var message in _persistentMessageContext.Messages)
             {
-                if (_messageContext.Messages.FirstOrDefault(m => m.Id == message.Id) == null)
+                if (_messageContext.Messages.Any(m => m.Id == message.Id))
                     _messageContext.Messages.Add(message);
             }
             await _messageContext.SaveChangesAsync();

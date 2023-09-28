@@ -35,7 +35,11 @@ namespace ChatRoomDemoClient
 
             using HttpResponseMessage response = await client.SendAsync(message);
 
-            response.EnsureSuccessStatusCode().WriteRequestToConsole();
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine(response.StatusCode);
+                return false;
+            }
 
             var responseData = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"{responseData}\n");

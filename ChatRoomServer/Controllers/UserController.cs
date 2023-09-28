@@ -45,21 +45,13 @@ namespace ChatRoomServer.Controllers
 
             if (credentialsArray[0].Length == 0 || credentialsArray[1].Length == 0)
                 return StatusCode(406, "Invalid Input");
-            int hash = credentialsArray[1].GetHashCode();
-            if (_context.Users.Where(n => n.Username == credentialsArray[0] && n.PasswordHash == hash).Count() > 0)
+            int hash = int.Parse(credentialsArray[1]);
+            if (_context.Users.Any(n => n.Username == credentialsArray[0] && n.PasswordHash == hash))
             {
                 Tokens token = _jwtManager.GenerateToken(credentialsArray[0]);
                 return Ok(token);
             }
             return StatusCode(406, "Username and/or password is incorrect");
-        }
-
-        // DEBUG
-        [AllowAnonymous]
-        public IActionResult Encode(string username, string password)
-        {
-            byte[] plainTextBytes = Encoding.UTF8.GetBytes($"{username}:{password}");
-            return Ok(Convert.ToBase64String(plainTextBytes));
         }
 
         [AllowAnonymous]
@@ -76,9 +68,9 @@ namespace ChatRoomServer.Controllers
 
             if (credentialsArray[0].Length == 0 || credentialsArray[1].Length == 0)
                 return StatusCode(406, "Invalid Input");
-            int hash = credentialsArray[1].GetHashCode();
-            User user = new User() { Username = credentialsArray[0], PasswordHash = hash, Id = (_context.Users.LastOrDefault()?.Id ?? -1) + 1 };
-            if (_context.Users.Where(n => n.Username == credentialsArray[0]).Count() > 0)
+            int hash = int.Parse(credentialsArray[1]);
+            User user = new User() { Username = credentialsArray[0], PasswordHash = hash };
+            if (_context.Users.Any(n => n.Username == credentialsArray[0]))
                 return StatusCode(406, "User already in system");
             _context.Users.Add(user);
             _context.SaveChanges();
