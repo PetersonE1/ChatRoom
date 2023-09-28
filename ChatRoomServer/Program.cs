@@ -44,9 +44,9 @@ else
 builder.Services.AddSingleton<IJWTManagerRepository, JWTManagerRepository>();
 
 builder.Services.AddControllers();
-builder.Services.AddDbContext<UserContext>(opt => opt.UseInMemoryDatabase("UserList"));
+builder.Services.AddDbContext<UserContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddDbContext<MessageContext>(opt => opt.UseInMemoryDatabase("MessageList"));
-//builder.Services.AddDbContext<MessageContextPersistent>(opt => opt.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
+builder.Services.AddDbContext<MessageContextPersistent>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
