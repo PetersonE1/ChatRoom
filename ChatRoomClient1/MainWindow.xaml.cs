@@ -45,7 +45,7 @@ namespace ChatRoomClient
 
         private async void B_Login_Click(object sender, RoutedEventArgs e)
         {
-            string userpass = I_Username.Text + ":" + I_Password.Password.GetHashCode();
+            string userpass = I_Username.Text + ":" + I_Password.Password;
             string userHash = userpass.ToBase64();
             bool success = await AuthenticationHandler.Authenticate(userHash, _client);
             if (!success) return;
@@ -60,7 +60,7 @@ namespace ChatRoomClient
 
         private async void B_Register_Click(object sender, RoutedEventArgs e)
         {
-            string userpass = I_Username.Text + ":" + I_Password.Password.GetHashCode();
+            string userpass = I_Username.Text + ":" + I_Password.Password;
             string userHash = userpass.ToBase64();
             await AuthenticationHandler.Register(userHash, _client);
             await AuthenticationHandler.Authenticate(userHash, _client);
@@ -75,7 +75,7 @@ namespace ChatRoomClient
 
         private async void B_RefreshLogin_Click(object sender, RoutedEventArgs e)
         {
-            string userpass = I_Username.Text + ":" + I_Password.Password.GetHashCode();
+            string userpass = I_Username.Text + ":" + I_Password.Password;
             string userHash = userpass.ToBase64();
             await AuthenticationHandler.Authenticate(userHash, _client);
             if (_webSocket == null || _webSocket.State != WebSocketState.Open)

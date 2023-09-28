@@ -45,7 +45,7 @@ namespace ChatRoomServer.Controllers
 
             if (credentialsArray[0].Length == 0 || credentialsArray[1].Length == 0)
                 return StatusCode(406, "Invalid Input");
-            int hash = int.Parse(credentialsArray[1]);
+            string hash = credentialsArray[1].GetSecureHash();
             if (_context.Users.Any(n => n.Username == credentialsArray[0] && n.PasswordHash == hash))
             {
                 Tokens token = _jwtManager.GenerateToken(credentialsArray[0]);
@@ -68,7 +68,7 @@ namespace ChatRoomServer.Controllers
 
             if (credentialsArray[0].Length == 0 || credentialsArray[1].Length == 0)
                 return StatusCode(406, "Invalid Input");
-            int hash = int.Parse(credentialsArray[1]);
+            string hash = credentialsArray[1].GetSecureHash();
             User user = new User() { Username = credentialsArray[0], PasswordHash = hash };
             if (_context.Users.Any(n => n.Username == credentialsArray[0]))
                 return StatusCode(406, "User already in system");
