@@ -4,16 +4,19 @@ using ChatRoomServer.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ChatRoomServer.Migrations.Message
+namespace ChatRoomServer.Migrations.MessageContextPersistentMigrations
 {
-    [DbContext(typeof(MessageContext))]
-    partial class MessageContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(MessageContextPersistent))]
+    [Migration("20230929011215_ReturnMessageStorage")]
+    partial class ReturnMessageStorage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

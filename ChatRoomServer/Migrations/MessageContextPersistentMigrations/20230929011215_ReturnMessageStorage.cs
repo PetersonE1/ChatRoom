@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace ChatRoomServer.Migrations.Message
+namespace ChatRoomServer.Migrations.MessageContextPersistentMigrations
 {
     /// <inheritdoc />
-    public partial class ReplaceMessageStorage : Migration
+    public partial class ReturnMessageStorage : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
