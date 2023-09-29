@@ -94,12 +94,10 @@ namespace ChatRoomClient
 
         private async void B_Command_Click(object sender, RoutedEventArgs e)
         {
-            Debug.WriteLine(this.ActualHeight);
-            Debug.WriteLine(this.ActualWidth);
             if (_webSocket == null || _webSocket.State != WebSocketState.Open)
                 return;
 
-            string s = I_Command.Text.ToBase64();
+            string s = I_Command.Text.Trim().ToBase64();
 
             await _webSocket.SendAsync(
                             new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),

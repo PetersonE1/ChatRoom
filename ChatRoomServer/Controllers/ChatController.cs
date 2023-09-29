@@ -99,21 +99,5 @@ namespace ChatRoomServer.Controllers
                 return date + "-" + Convert.ToBase64String(bytes);
             }
         }
-
-        // DEBUG
-        public IActionResult TestAction(int num1, int num2)
-        {
-            try
-            {
-                string s = $"Test 2 Successful for {_context.HttpContext?.User.Identity?.Name}: {num1 + num2}";
-                _logger.LogInformation("Get success 2");
-                return Ok(s);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Something went wrong inside TestAction: {ex.Message}");
-                return StatusCode(500, "Internal server error");
-            }
-        }
     }
 }
