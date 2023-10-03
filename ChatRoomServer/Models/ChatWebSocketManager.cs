@@ -83,8 +83,8 @@ namespace ChatRoomServer.Models
             }
 
             string s = JsonConvert.SerializeObject(messageContext.Messages.Where(
-                message => message.TimeSent > cutoffTime
-                ));
+                message => message.TimeSent.CompareTo(cutoffTime) > 0
+                ).ToArray(), typeof(Message[]), null);
 
             await webSocket.SendAsync(
                 new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),

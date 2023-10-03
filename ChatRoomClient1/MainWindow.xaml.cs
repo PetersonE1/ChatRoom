@@ -19,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ChatRoomClient
 {
@@ -32,7 +33,7 @@ namespace ChatRoomClient
         HttpClient _client;
         WebSocket? _webSocket => AuthenticationHandler._webSocket;
         List<string> _messagesToSend = new List<string>();
-        public Dictionary<string, Message> _receivedMessages;
+        public Dictionary<string, Message> _receivedMessages = new Dictionary<string, Message>();
 
         public MainWindow()
         {
@@ -145,10 +146,10 @@ namespace ChatRoomClient
                 if (_messagesToSend.Count == 0)
                     s = "NULL";
 
-                if (_receivedMessages.Count > 0)
+                if (_receivedMessages.Count == 0)
                     s += "$" + DateTime.MinValue.ToBinary();
                 else
-                    s += "$" + _receivedMessages.Last().Value.TimeSent.ToUniversalTime().ToBinary();
+                    s += "$" + _receivedMessages.Last().Value.TimeSent.ToBinary();
 
                 _messagesToSend.Clear();
                 await _webSocket.SendAsync(
@@ -160,7 +161,23 @@ namespace ChatRoomClient
                 var bytes = new byte[1024];
                 var result = await _webSocket.ReceiveAsync(bytes, default);
                 string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
-                Message[] messages = JsonConvert.DeserializeObject<Message[]>(res) ?? new Message[0];
+
+                T_ChatFeed.Document.Blocks.Clear();
+                T_ChatFeed.Document.Blocks.Add(
+                    new Paragraph(new Run(res))
+                    );
+                _webSocketTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+                JsonConvert.DeserializeObject<Message[]>(res);
+                /*Message[] messages = Array.Empty<Message>();
+                try
+                {
+                    messages = JsonConvert.DeserializeObject<Message[]>(res) ?? Array.Empty<Message>();
+                }
+                catch (JsonReaderException ex)
+                {
+                    Debug.Write(ex.StackTrace);
+                }
+
                 if (messages.Length > 0)
                 {
                     foreach (Message message in messages)
@@ -170,10 +187,10 @@ namespace ChatRoomClient
                         text += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}] " + message.Body + "\r\n";
                     T_ChatFeed.Document.Blocks.Clear();
                     T_ChatFeed.Document.Blocks.Add(
-                        new Paragraph(new Run(res))
+                        new Paragraph(new Run(text))
                         );
                     T_ChatFeed.ScrollToEnd();
-                }
+                }*/
             });
         }
 
