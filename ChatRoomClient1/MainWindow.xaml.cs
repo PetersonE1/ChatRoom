@@ -1,5 +1,6 @@
 ﻿using ChatRoomDemoClient;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,6 +32,7 @@ namespace ChatRoomClient
         HttpClient _client;
         WebSocket? _webSocket => AuthenticationHandler._webSocket;
         List<string> _messagesToSend = new List<string>();
+        public Dictionary<string, Message> _receivedMessages;
 
         public MainWindow()
         {
@@ -143,8 +145,12 @@ namespace ChatRoomClient
                 if (_messagesToSend.Count == 0)
                     s = "NULL";
 
+                if (_receivedMessages.Count > 0)
+                    s += "$" + DateTime.MinValue.ToBinary();
+                else
+                    s += "$" + _receivedMessages.Last().Value.TimeSent.ToUniversalTime().ToBinary();
+
                 _messagesToSend.Clear();
-                Debug.WriteLine(s);
                 await _webSocket.SendAsync(
                                 new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
                                 WebSocketMessageType.Text,
@@ -154,8 +160,14 @@ namespace ChatRoomClient
                 var bytes = new byte[1024];
                 var result = await _webSocket.ReceiveAsync(bytes, default);
                 string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
-                if (res != ((Run?)((Paragraph?)T_ChatFeed.Document.Blocks.FirstBlock)?.Inlines.FirstInline)?.Text)
+                Message[] messages = JsonConvert.DeserializeObject<Message[]>(res) ?? new Message[0];
+                if (messages.Length > 0)
                 {
+                    foreach (Message message in messages)
+                        _receivedMessages.Add(message.Id, message);
+                    string text = string.Empty;
+                    foreach (Message message in _receivedMessages.Values)
+                        text += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}] " + message.Body + "\r\n";
                     T_ChatFeed.Document.Blocks.Clear();
                     T_ChatFeed.Document.Blocks.Add(
                         new Paragraph(new Run(res))
@@ -173,5 +185,13 @@ namespace ChatRoomClient
                 T_CommandLog.AppendText(message.ToString());
             });
         }
+    }
+
+    public class Message
+    {
+        public string Id { get; set; }
+        public string? Body { get; set; }
+        public string Sender { get; set; }
+        public DateTime TimeSent { get; set; }
     }
 }

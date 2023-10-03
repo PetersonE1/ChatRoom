@@ -1,6 +1,7 @@
 ﻿using ChatRoomServer.Controllers;
 using ChatRoomServer.Repository;
 using Microsoft.AspNetCore.Server.IIS.Core;
+using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -17,10 +18,12 @@ namespace ChatRoomServer.Models
 
             while (!receiveResult.CloseStatus.HasValue)
             {
-                string input = Encoding.UTF8.GetString(buffer);
-                if (input.Trim('\0') == "NULL")
+                string[] tempInput = Encoding.UTF8.GetString(buffer).Split('$');
+                string input = tempInput[0];
+                DateTime cutoff = DateTime.FromBinary(long.Parse(tempInput[1].Trim('\0')));
+                if (input == "NULL")
                 {
-                    TextMessage(null, context, messageContext, webSocket);
+                    TextMessage(null, cutoff, context, messageContext, webSocket);
 
                     buffer = new byte[1024 * 4];
                     receiveResult = await webSocket.ReceiveAsync(
@@ -40,7 +43,7 @@ namespace ChatRoomServer.Models
                 }
                 switch (receiveResult.MessageType)
                 {
-                    case WebSocketMessageType.Text: TextMessage(messages, context, messageContext, webSocket); break;
+                    case WebSocketMessageType.Text: TextMessage(messages, cutoff, context, messageContext, webSocket); break;
                     case WebSocketMessageType.Binary: CommandMessage(messages, context, messageContext, webSocket); break;
                     case WebSocketMessageType.Close: break;
                     default: break;
@@ -61,7 +64,7 @@ namespace ChatRoomServer.Models
                 CancellationToken.None);
         }
 
-        private static async void TextMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket)
+        private static async void TextMessage(string[]? messages, DateTime cutoffTime, HttpContext context, MessageContext messageContext, WebSocket webSocket)
         {
             if (messages != null)
             {
@@ -79,11 +82,9 @@ namespace ChatRoomServer.Models
                 await messageContext.SaveChangesAsync();
             }
 
-            string s = string.Empty;
-            foreach (Message message in messageContext.Messages)
-            {
-                s += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}] " + message.Body + "\r\n";
-            }
+            string s = JsonConvert.SerializeObject(messageContext.Messages.Where(
+                message => message.TimeSent > cutoffTime
+                ));
 
             await webSocket.SendAsync(
                 new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
