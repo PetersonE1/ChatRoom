@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -100,7 +101,7 @@ namespace ChatRoomClient
             if (_webSocket == null || _webSocket.State != WebSocketState.Open)
                 return;
 
-            string s = I_Command.Text.Trim().ToBase64();
+            string s = I_Command.Text.Trim().ToBase64() + "$" + DateTime.MinValue.ToBinary();
 
             await _webSocket.SendAsync(
                             new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
@@ -149,7 +150,7 @@ namespace ChatRoomClient
                 if (_receivedMessages.Count == 0)
                     s += "$" + DateTime.MinValue.ToBinary();
                 else
-                    s += "$" + _receivedMessages.Last().Value.TimeSent.ToBinary();
+                    s += "$" + _receivedMessages.Last().Value.TimeSent.ToUniversalTime().ToBinary();
 
                 _messagesToSend.Clear();
                 await _webSocket.SendAsync(
@@ -162,35 +163,35 @@ namespace ChatRoomClient
                 var result = await _webSocket.ReceiveAsync(bytes, default);
                 string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
 
-                T_ChatFeed.Document.Blocks.Clear();
-                T_ChatFeed.Document.Blocks.Add(
-                    new Paragraph(new Run(res))
-                    );
-                _webSocketTimer?.Change(Timeout.Infinite, Timeout.Infinite);
-                JsonConvert.DeserializeObject<Message[]>(res);
-                /*Message[] messages = Array.Empty<Message>();
+                Message? message = default;
                 try
                 {
-                    messages = JsonConvert.DeserializeObject<Message[]>(res) ?? Array.Empty<Message>();
+                    message = JsonConvert.DeserializeObject<Message>(res);
                 }
                 catch (JsonReaderException ex)
                 {
                     Debug.Write(ex.StackTrace);
                 }
 
-                if (messages.Length > 0)
+                if (message != null && message != default)
                 {
-                    foreach (Message message in messages)
-                        _receivedMessages.Add(message.Id, message);
+                    message.TimeSent = message.TimeSent.ToLocalTime();
+                    _receivedMessages.Add(message.Id, message);
                     string text = string.Empty;
-                    foreach (Message message in _receivedMessages.Values)
-                        text += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}] " + message.Body + "\r\n";
+                    Message? previousMessage = default;
+                    foreach (Message receivedMessage in _receivedMessages.Values)
+                    {
+                        if (previousMessage?.TimeSent.Date != receivedMessage.TimeSent.Date)
+                            text += $"----- {receivedMessage.TimeSent.ToShortDateString()} -----\n";
+                        text += $"[{receivedMessage.Sender} {receivedMessage.TimeSent.ToShortTimeString()}] " + receivedMessage.Body + "\r\n";
+                        previousMessage = receivedMessage;
+                    }
                     T_ChatFeed.Document.Blocks.Clear();
                     T_ChatFeed.Document.Blocks.Add(
                         new Paragraph(new Run(text))
                         );
                     T_ChatFeed.ScrollToEnd();
-                }*/
+                }
             });
         }
 
