@@ -9,8 +9,11 @@ namespace ChatRoomServer.Models
 {
     public class ChatWebSocketManager
     {
+        public static Dictionary<WebSocket, int> messagesToLoadCount = new Dictionary<WebSocket, int>();
+
         public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext)
         {
+            messagesToLoadCount.Add(webSocket, 50);
             Console.WriteLine($"Opening connection with {context.Connection.RemoteIpAddress} at {DateTime.UtcNow}");
             var buffer = new byte[1024 * 4];
             var receiveResult = await webSocket.ReceiveAsync(
@@ -62,6 +65,8 @@ namespace ChatRoomServer.Models
                 receiveResult.CloseStatus.Value,
                 receiveResult.CloseStatusDescription,
                 CancellationToken.None);
+
+            messagesToLoadCount.Remove(webSocket);
         }
 
         private static async void TextMessage(string[]? messages, DateTime cutoffTime, HttpContext context, MessageContext messageContext, WebSocket webSocket)
@@ -82,7 +87,9 @@ namespace ChatRoomServer.Models
                 await messageContext.SaveChangesAsync();
             }
 
-            string s = JsonConvert.SerializeObject(messageContext.Messages.FirstOrDefault(
+            int messageCount = messagesToLoadCount[webSocket];
+            Message[] toSend = messageContext.Messages.AsEnumerable().TakeLast(messageCount).ToArray();
+            string s = JsonConvert.SerializeObject(toSend.FirstOrDefault(
                 message => message.TimeSent.CompareTo(cutoffTime) > 0));
 
             await webSocket.SendAsync(
@@ -94,10 +101,10 @@ namespace ChatRoomServer.Models
 
         private static async void CommandMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket)
         {
-            List<bool> results = new List<bool>();
+            List<Tuple<bool, string>> results = new List<Tuple<bool, string>>();
             if (messages != null)
                 foreach (string message in messages)
-                    results.Add(await CommandProcessor.ProcessCommand(message));
+                    results.Add(await CommandProcessor.ProcessCommand(message, webSocket, context));
 
             string s = string.Join(", ", results);
 
@@ -106,6 +113,17 @@ namespace ChatRoomServer.Models
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
+        }
+
+        public static void PurgeWebsocketsFromDict()
+        {
+            List<WebSocket> toPurge = new List<WebSocket>();
+            foreach (WebSocket socket in messagesToLoadCount.Keys)
+                if (socket.State != WebSocketState.Open)
+                    toPurge.Add(socket);
+
+            foreach (WebSocket socket in toPurge)
+                messagesToLoadCount.Remove(socket);
         }
 
         private static string[] ProcessInput(string input)
