@@ -18,11 +18,6 @@ namespace ChatRoomServer.Controllers
             _logger = logger;
             _context = context;
             _jwtManager = jwtManager;
-
-            //DEBUG
-            /*User user = new User() { Id = 0, Username = "test", PasswordHash = "test".GetHashCode() };
-            _context.Users.Add(user);
-            _context.SaveChanges();*/
         }
 
         [AllowAnonymous]

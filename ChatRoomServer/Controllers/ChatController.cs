@@ -22,12 +22,14 @@ namespace ChatRoomServer.Controllers
         private readonly ILogger<ChatController> _logger;
         private readonly IHttpContextAccessor _context;
         private readonly MessageContext _messageContext;
+        private readonly IConfiguration _configuration;
 
-        public ChatController(ILogger<ChatController> logger, IHttpContextAccessor context, MessageContext messageContext)
+        public ChatController(ILogger<ChatController> logger, IHttpContextAccessor context, MessageContext messageContext, IConfiguration configuration)
         {
             _logger = logger;
             _context = context;
             _messageContext = messageContext;
+            _configuration = configuration;
         }
 
         public IActionResult Index()
@@ -79,7 +81,7 @@ namespace ChatRoomServer.Controllers
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await ChatWebSocketManager.ProcessRequest(webSocket, HttpContext, _messageContext);
+                await ChatWebSocketManager.ProcessRequest(webSocket, HttpContext, _messageContext, _configuration);
             }
             else
             {

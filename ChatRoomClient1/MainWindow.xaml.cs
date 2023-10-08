@@ -101,7 +101,9 @@ namespace ChatRoomClient
             if (_webSocket == null || _webSocket.State != WebSocketState.Open)
                 return;
 
-            string s = I_Command.Text.Trim().ToBase64() + "$" + DateTime.MinValue.ToBinary();
+            string input = I_Command.Text.Trim();
+
+            string s = input.ToBase64() + "$" + DateTime.MinValue.ToBinary();
 
             await _webSocket.SendAsync(
                             new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
@@ -113,6 +115,7 @@ namespace ChatRoomClient
             var result = await _webSocket.ReceiveAsync(bytes, default);
             string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
             LogCommand(res);
+            ClearMessageInternal(input, res);
         }
 
         private void B_Send_Click(object sender, RoutedEventArgs e)
@@ -202,6 +205,42 @@ namespace ChatRoomClient
                 T_CommandLog.Document.Blocks.Clear();
                 T_CommandLog.AppendText(message.ToString());
             });
+        }
+
+        private void ClearMessageInternal(string input, string res)
+        {
+            if (input.Contains("DELETE"))
+            {
+                try
+                {
+                    string key = input.Split(' ')[1];
+                    if (_receivedMessages.ContainsKey(key) && res.Contains("True"))
+                    {
+                        _receivedMessages.Remove(key);
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            string text = string.Empty;
+                            Message? previousMessage = default;
+                            foreach (Message receivedMessage in _receivedMessages.Values)
+                            {
+                                if (previousMessage?.TimeSent.Date != receivedMessage.TimeSent.Date)
+                                    text += $"----- {receivedMessage.TimeSent.ToShortDateString()} -----\n";
+                                text += $"[{receivedMessage.Sender} {receivedMessage.TimeSent.ToShortTimeString()}] " + receivedMessage.Body + "\r\n";
+                                previousMessage = receivedMessage;
+                            }
+                            T_ChatFeed.Document.Blocks.Clear();
+                            T_ChatFeed.Document.Blocks.Add(
+                                new Paragraph(new Run(text))
+                                );
+                        });
+                    }
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    Debug.WriteLine("DELETE processing error");
+                }
+            }
         }
     }
 

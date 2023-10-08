@@ -11,7 +11,7 @@ namespace ChatRoomServer.Models
     {
         public static Dictionary<WebSocket, int> messagesToLoadCount = new Dictionary<WebSocket, int>();
 
-        public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext)
+        public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext, IConfiguration configuration)
         {
             messagesToLoadCount.Add(webSocket, 50);
             Console.WriteLine($"Opening connection with {context.Connection.RemoteIpAddress} at {DateTime.UtcNow}");
@@ -47,7 +47,7 @@ namespace ChatRoomServer.Models
                 switch (receiveResult.MessageType)
                 {
                     case WebSocketMessageType.Text: TextMessage(messages, cutoff, context, messageContext, webSocket); break;
-                    case WebSocketMessageType.Binary: CommandMessage(messages, context, messageContext, webSocket); break;
+                    case WebSocketMessageType.Binary: CommandMessage(messages, context, messageContext, webSocket, configuration); break;
                     case WebSocketMessageType.Close: break;
                     default: break;
                 }
@@ -99,12 +99,12 @@ namespace ChatRoomServer.Models
                 CancellationToken.None);
         }
 
-        private static async void CommandMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket)
+        private static async void CommandMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket, IConfiguration configuration)
         {
             List<Tuple<bool, string>> results = new List<Tuple<bool, string>>();
             if (messages != null)
                 foreach (string message in messages)
-                    results.Add(await CommandProcessor.ProcessCommand(message, webSocket, context));
+                    results.Add(await CommandProcessor.ProcessCommand(message, webSocket, context, configuration, messageContext));
 
             string s = string.Join(", ", results);
 
