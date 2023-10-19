@@ -29,6 +29,7 @@ namespace ChatRoomClient
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static MainWindow _Instance;
         const int WEBSOCKET_DELAY = 100;
         Timer? _webSocketTimer;
         HttpClient _client;
@@ -38,6 +39,8 @@ namespace ChatRoomClient
 
         public MainWindow()
         {
+            if (_Instance == null)
+                _Instance = this;
             _client = new()
             {
                 BaseAddress = new Uri("https://localhost:7185")
@@ -114,8 +117,23 @@ namespace ChatRoomClient
             var bytes = new byte[1024];
             var result = await _webSocket.ReceiveAsync(bytes, default);
             string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
+
+            if (result.MessageType == WebSocketMessageType.Binary)
+            {
+                Message? message = default;
+                try
+                {
+                    message = JsonConvert.DeserializeObject<Message>(res);
+                }
+                catch (JsonReaderException ex)
+                {
+                    Debug.Write(ex.StackTrace);
+                }
+
+                if (message != null && message != default)
+                    CommandProcessor.ProcessCommand(Dispatcher, message);
+            }
             LogCommand(res);
-            ClearMessageInternal(input, res);
         }
 
         private void B_Send_Click(object sender, RoutedEventArgs e)
@@ -178,6 +196,12 @@ namespace ChatRoomClient
 
                 if (message != null && message != default)
                 {
+                    if (result.MessageType == WebSocketMessageType.Binary)
+                    {
+                        CommandProcessor.ProcessCommand(Dispatcher, message);
+                        return;
+                    }
+
                     message.TimeSent = message.TimeSent.ToLocalTime();
                     _receivedMessages.Add(message.Id, message);
                     string text = string.Empty;
@@ -198,7 +222,7 @@ namespace ChatRoomClient
             });
         }
 
-        private void LogCommand(object message)
+        public void LogCommand(object message)
         {
             Dispatcher.Invoke(() =>
             {
@@ -207,39 +231,35 @@ namespace ChatRoomClient
             });
         }
 
-        private void ClearMessageInternal(string input, string res)
+        public void ClearMessageInternal(string key)
         {
-            if (input.Contains("DELETE"))
+            try
             {
-                try
+                if (_receivedMessages.ContainsKey(key))
                 {
-                    string key = input.Split(' ')[1];
-                    if (_receivedMessages.ContainsKey(key) && res.Contains("True"))
-                    {
-                        _receivedMessages.Remove(key);
+                    _receivedMessages.Remove(key);
 
-                        Dispatcher.Invoke(() =>
+                    Dispatcher.Invoke(() =>
+                    {
+                        string text = string.Empty;
+                        Message? previousMessage = default;
+                        foreach (Message receivedMessage in _receivedMessages.Values)
                         {
-                            string text = string.Empty;
-                            Message? previousMessage = default;
-                            foreach (Message receivedMessage in _receivedMessages.Values)
-                            {
-                                if (previousMessage?.TimeSent.Date != receivedMessage.TimeSent.Date)
-                                    text += $"----- {receivedMessage.TimeSent.ToShortDateString()} -----\n";
-                                text += $"[{receivedMessage.Sender} {receivedMessage.TimeSent.ToShortTimeString()}] " + receivedMessage.Body + "\r\n";
-                                previousMessage = receivedMessage;
-                            }
-                            T_ChatFeed.Document.Blocks.Clear();
-                            T_ChatFeed.Document.Blocks.Add(
-                                new Paragraph(new Run(text))
-                                );
-                        });
-                    }
+                            if (previousMessage?.TimeSent.Date != receivedMessage.TimeSent.Date)
+                                text += $"----- {receivedMessage.TimeSent.ToShortDateString()} -----\n";
+                            text += $"[{receivedMessage.Sender} {receivedMessage.TimeSent.ToShortTimeString()}] " + receivedMessage.Body + "\r\n";
+                            previousMessage = receivedMessage;
+                        }
+                        T_ChatFeed.Document.Blocks.Clear();
+                        T_ChatFeed.Document.Blocks.Add(
+                            new Paragraph(new Run(text))
+                            );
+                    });
                 }
-                catch (IndexOutOfRangeException)
-                {
-                    Debug.WriteLine("DELETE processing error");
-                }
+            }
+            catch (IndexOutOfRangeException)
+            {
+                Debug.WriteLine("DELETE processing error");
             }
         }
     }

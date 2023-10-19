@@ -1,7 +1,9 @@
 ﻿using Hangfire;
+using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace ChatRoomServer.Models
@@ -19,7 +21,7 @@ namespace ChatRoomServer.Models
                     case "LOAD": return LoadMessageCount(args[1], webSocket);
                     case "ELEVATE": return ElevateSession(args[1], httpContext, configuration);
                     case "GET_ID": return GetMessageID(args[1], messages);
-                    case "DELETE": return DeleteMessage(args[1], httpContext, messages);
+                    case "DELETE": return await DeleteMessage(args[1], httpContext, messages);
                     default: break;
                 }
             }
@@ -78,11 +80,28 @@ namespace ChatRoomServer.Models
             }
         }
 
-        private static Tuple<bool, string> DeleteMessage(string id, HttpContext context, MessageContext messages)
+        private static async Task<Tuple<bool, string>> DeleteMessage(string id, HttpContext context, MessageContext messages)
         {
             if (context.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role && claim.Value == "Chat-Admin") == default)
                 return new Tuple<bool, string>(false, "Unauthorized");
             BackgroundJob.Enqueue<MessageStorageManager>(call => call.RemoveMessage(id));
+            Message deletionCommand = new Message()
+            {
+                Sender = "SERVER",
+                Id = "REMOVE",
+                Body = id,
+                TimeSent = DateTime.UtcNow
+            };
+            foreach (WebSocket socket in ChatWebSocketManager.messagesToLoadCount.Keys)
+            {
+                string s = JsonConvert.SerializeObject(deletionCommand);
+
+                await socket.SendAsync(
+                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
+                    WebSocketMessageType.Binary,
+                    false,
+                    CancellationToken.None);
+            }
             return new Tuple<bool, string>(true, "Removing message");
         }
     }
