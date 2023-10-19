@@ -132,6 +132,10 @@ namespace ChatRoomClient
 
                 if (message != null && message != default)
                     CommandProcessor.ProcessCommand(Dispatcher, message);
+
+                bytes = new byte[1024];
+                result = await _webSocket.ReceiveAsync(bytes, default);
+                res = Encoding.UTF8.GetString(bytes, 0, result.Count);
             }
             LogCommand(res);
         }

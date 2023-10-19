@@ -99,7 +99,7 @@ namespace ChatRoomServer.Models
                 await socket.SendAsync(
                     new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
                     WebSocketMessageType.Binary,
-                    false,
+                    true,
                     CancellationToken.None);
             }
             return new Tuple<bool, string>(true, "Removing message");
