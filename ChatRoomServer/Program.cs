@@ -101,5 +101,6 @@ app.MapControllers();
 app.UseHangfireDashboard();
 BackgroundJob.Enqueue<MessageStorageManager>(call => call.LoadMessagesFromDatabaseAsync());
 RecurringJob.AddOrUpdate<MessageStorageManager>("save_messages_to_database", call => call.SaveMessagesToDatabaseAsync(), "*/5 * * * *");
+RecurringJob.AddOrUpdate<ChatWebSocketManager>("purge_inactive_websockets", call => ChatWebSocketManager.PurgeWebsocketsFromDict(), "*/5 * * * *");
 
 app.Run();

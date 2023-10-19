@@ -34,5 +34,18 @@ namespace ChatRoomServer.Models
             }
             await _messageContext.SaveChangesAsync();
         }
+
+        public async Task RemoveMessage(string id)
+        {
+            Message? message = _messageContext.Messages.Find(id);
+            if (message == null)
+                return;
+            _messageContext.Messages.Remove(message);
+            if (_persistentMessageContext.Messages.Contains(message))
+                _persistentMessageContext.Messages.Remove(message);
+
+            await _messageContext.SaveChangesAsync();
+            await _persistentMessageContext.SaveChangesAsync();
+        }
     }
 }

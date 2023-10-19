@@ -1,6 +1,7 @@
 ﻿using ChatRoomServer.Controllers;
 using ChatRoomServer.Repository;
 using Microsoft.AspNetCore.Server.IIS.Core;
+using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -8,8 +9,11 @@ namespace ChatRoomServer.Models
 {
     public class ChatWebSocketManager
     {
-        public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext)
+        public static Dictionary<WebSocket, int> messagesToLoadCount = new Dictionary<WebSocket, int>();
+
+        public static async Task ProcessRequest(WebSocket webSocket, HttpContext context, MessageContext messageContext, IConfiguration configuration)
         {
+            messagesToLoadCount.Add(webSocket, 50);
             Console.WriteLine($"Opening connection with {context.Connection.RemoteIpAddress} at {DateTime.UtcNow}");
             var buffer = new byte[1024 * 4];
             var receiveResult = await webSocket.ReceiveAsync(
@@ -17,10 +21,12 @@ namespace ChatRoomServer.Models
 
             while (!receiveResult.CloseStatus.HasValue)
             {
-                string input = Encoding.UTF8.GetString(buffer);
-                if (input.Trim('\0') == "NULL")
+                string[] tempInput = Encoding.UTF8.GetString(buffer).Split('$');
+                string input = tempInput[0];
+                DateTime cutoff = DateTime.FromBinary(long.Parse(tempInput[1].Trim('\0')));
+                if (input == "NULL")
                 {
-                    TextMessage(null, context, messageContext, webSocket);
+                    TextMessage(null, cutoff, context, messageContext, webSocket);
 
                     buffer = new byte[1024 * 4];
                     receiveResult = await webSocket.ReceiveAsync(
@@ -40,8 +46,8 @@ namespace ChatRoomServer.Models
                 }
                 switch (receiveResult.MessageType)
                 {
-                    case WebSocketMessageType.Text: TextMessage(messages, context, messageContext, webSocket); break;
-                    case WebSocketMessageType.Binary: CommandMessage(messages, context, messageContext, webSocket); break;
+                    case WebSocketMessageType.Text: TextMessage(messages, cutoff, context, messageContext, webSocket); break;
+                    case WebSocketMessageType.Binary: CommandMessage(messages, context, messageContext, webSocket, configuration); break;
                     case WebSocketMessageType.Close: break;
                     default: break;
                 }
@@ -59,9 +65,11 @@ namespace ChatRoomServer.Models
                 receiveResult.CloseStatus.Value,
                 receiveResult.CloseStatusDescription,
                 CancellationToken.None);
+
+            messagesToLoadCount.Remove(webSocket);
         }
 
-        private static async void TextMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket)
+        private static async void TextMessage(string[]? messages, DateTime cutoffTime, HttpContext context, MessageContext messageContext, WebSocket webSocket)
         {
             if (messages != null)
             {
@@ -79,11 +87,10 @@ namespace ChatRoomServer.Models
                 await messageContext.SaveChangesAsync();
             }
 
-            string s = string.Empty;
-            foreach (Message message in messageContext.Messages)
-            {
-                s += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}] " + message.Body + "\r\n";
-            }
+            int messageCount = messagesToLoadCount[webSocket];
+            Message[] toSend = messageContext.Messages.AsEnumerable().TakeLast(messageCount).ToArray();
+            string s = JsonConvert.SerializeObject(toSend.FirstOrDefault(
+                message => message.TimeSent.CompareTo(cutoffTime) > 0));
 
             await webSocket.SendAsync(
                 new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
@@ -92,12 +99,12 @@ namespace ChatRoomServer.Models
                 CancellationToken.None);
         }
 
-        private static async void CommandMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket)
+        private static async void CommandMessage(string[]? messages, HttpContext context, MessageContext messageContext, WebSocket webSocket, IConfiguration configuration)
         {
-            List<bool> results = new List<bool>();
+            List<Tuple<bool, string>> results = new List<Tuple<bool, string>>();
             if (messages != null)
                 foreach (string message in messages)
-                    results.Add(await CommandProcessor.ProcessCommand(message));
+                    results.Add(await CommandProcessor.ProcessCommand(message, webSocket, context, configuration, messageContext));
 
             string s = string.Join(", ", results);
 
@@ -106,6 +113,17 @@ namespace ChatRoomServer.Models
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
+        }
+
+        public static void PurgeWebsocketsFromDict()
+        {
+            List<WebSocket> toPurge = new List<WebSocket>();
+            foreach (WebSocket socket in messagesToLoadCount.Keys)
+                if (socket.State != WebSocketState.Open)
+                    toPurge.Add(socket);
+
+            foreach (WebSocket socket in toPurge)
+                messagesToLoadCount.Remove(socket);
         }
 
         private static string[] ProcessInput(string input)
