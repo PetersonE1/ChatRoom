@@ -36,6 +36,8 @@ namespace ChatRoomClient
         WebSocket? _webSocket => AuthenticationHandler._webSocket;
         List<string> _messagesToSend = new List<string>();
         public Dictionary<string, Message> _receivedMessages = new Dictionary<string, Message>();
+        public Dictionary<string, Message> _refreshReceivedMessages = new Dictionary<string, Message>();
+        public static bool MessageTimeRefresh;
 
         public MainWindow()
         {
@@ -105,6 +107,8 @@ namespace ChatRoomClient
                 return;
 
             string input = I_Command.Text.Trim();
+            if (input.Contains("LOAD"))
+                MessageTimeRefresh = true;
 
             string s = input.ToBase64() + "$" + DateTime.MinValue.ToBinary();
 
@@ -172,10 +176,13 @@ namespace ChatRoomClient
                 if (_messagesToSend.Count == 0)
                     s = "NULL";
 
-                if (_receivedMessages.Count == 0)
+                if (_receivedMessages.Count == 0 || (MessageTimeRefresh && _refreshReceivedMessages.Count == 0))
                     s += "$" + DateTime.MinValue.ToBinary();
                 else
-                    s += "$" + _receivedMessages.Last().Value.TimeSent.ToUniversalTime().ToBinary();
+                    if (MessageTimeRefresh)
+                        s += "$" + _refreshReceivedMessages.Last().Value.TimeSent.ToUniversalTime().ToBinary();
+                    else
+                        s += "$" + _receivedMessages.Last().Value.TimeSent.ToUniversalTime().ToBinary();
 
                 _messagesToSend.Clear();
                 await _webSocket.SendAsync(
@@ -207,10 +214,26 @@ namespace ChatRoomClient
                     }
 
                     message.TimeSent = message.TimeSent.ToLocalTime();
-                    _receivedMessages.Add(message.Id, message);
+                    if (_receivedMessages.ContainsKey(message.Id))
+                    {
+                        MessageTimeRefresh = false;
+                        _refreshReceivedMessages.Clear();
+                        return;
+                    }
+                    Message[] MessagesToRead;
+                    if (MessageTimeRefresh)
+                    {
+                        _refreshReceivedMessages.Add(message.Id, message);
+                        MessagesToRead = _refreshReceivedMessages.Concat(_receivedMessages).Select(n => n.Value).ToArray();
+                    }
+                    else
+                    {
+                        _receivedMessages.Add(message.Id, message);
+                        MessagesToRead = _receivedMessages.Values.ToArray();
+                    }
                     string text = string.Empty;
                     Message? previousMessage = default;
-                    foreach (Message receivedMessage in _receivedMessages.Values)
+                    foreach (Message receivedMessage in MessagesToRead)
                     {
                         if (previousMessage?.TimeSent.Date != receivedMessage.TimeSent.Date)
                             text += $"----- {receivedMessage.TimeSent.ToShortDateString()} -----\n";
@@ -221,7 +244,8 @@ namespace ChatRoomClient
                     T_ChatFeed.Document.Blocks.Add(
                         new Paragraph(new Run(text))
                         );
-                    T_ChatFeed.ScrollToEnd();
+                    if (!MessageTimeRefresh)
+                        T_ChatFeed.ScrollToEnd();
                 }
             });
         }
