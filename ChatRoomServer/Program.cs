@@ -70,31 +70,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.UseAuthorization();
-// DEBUG
-app.MapGet("/secret", (ClaimsPrincipal user) => $"Hello {user.Identity?.Name}.").RequireAuthorization();
-// DEBUG
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path == "/ws")
-    {
-        Console.WriteLine(context.Connection.RemoteIpAddress);
-        if (context.WebSockets.IsWebSocketRequest)
-        {
-            string s = (context.User.Identity?.Name ?? "Anonymous") + $" ({context.Connection.RemoteIpAddress})";
-            using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-            await EchoWebSocketManager.ProcessRequest(webSocket, s);
-        }
-        else
-        {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        }
-    }
-    else
-    {
-        await next(context);
-    }
-
-});
 
 app.MapControllers();
 

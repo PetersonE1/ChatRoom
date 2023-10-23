@@ -47,35 +47,6 @@ namespace ChatRoomServer.Controllers
             }
         }
 
-        // DEBUG
-        public IActionResult SendMessage([FromBody]string message)
-        {
-            _logger.LogInformation(message);
-            if (message == null)
-                return StatusCode(406, "Null Input");
-            Message new_message = new Message()
-            {
-                Body = message,
-                Sender = Request.HttpContext.User.Identity?.Name ?? "Anonymous",
-                TimeSent = DateTime.UtcNow,
-                Id = GenerateMessageID(32)
-            };
-            _messageContext.Messages.Add(new_message);
-            _messageContext.SaveChanges();
-            return Ok();
-        }
-
-        // DEBUG
-        public IActionResult GetMessages([FromHeader]bool displayID)
-        {
-            string s = string.Empty;
-            foreach (Message message in _messageContext.Messages)
-            {
-                s += $"[{message.Sender} {message.TimeSent.ToLocalTime().ToShortTimeString()}{(displayID ? $" ({message.Id})" : string.Empty)}] " + message.Body + "\r\n";
-            }
-            return Ok(s);
-        }
-
         public async Task EstablishConnection()
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
